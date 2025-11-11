@@ -19,4 +19,4 @@ ENV REDIS_URL=${REDIS_URL:-redis://localhost:6379}
 
 EXPOSE 8080
 
-CMD ["bash","-lc","pm2 start --name api 'npm run start' && pm2 start --name worker 'npm run worker' && pm2 logs --raw"]
+CMD ["node","src/index.js"]
