@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci || npm i
+RUN npm install --no-audit --no-fund
 COPY . .
 
 # pm2 for multi-process (api + worker)
