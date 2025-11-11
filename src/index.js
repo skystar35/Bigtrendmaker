@@ -1,5 +1,5 @@
 import Fastify from 'fastify';
-import cors from 'fastify-cors';
+import cors from '@fastify/cors';
 import { Registry, collectDefaultMetrics, Histogram } from 'prom-client';
 import { createClient } from 'redis';
 import { Queue } from 'bullmq';
