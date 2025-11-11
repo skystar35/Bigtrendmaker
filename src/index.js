@@ -19,10 +19,23 @@ const RENDER_DIR = process.env.RENDER_OUTPUT_DIR || path.join(STORAGE_DIR, 'rend
 fs.mkdirSync(STORAGE_DIR, { recursive: true });
 fs.mkdirSync(RENDER_DIR, { recursive: true });
 
-// Queue
+// Queue (sağlam başlatma: hata olsa da API çalışsın)
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const connection = new URL(REDIS_URL);
-const renderQueue = new Queue('render', { connection: { host: connection.hostname, port: parseInt(connection.port||'6379'), password: connection.password?.replace(/^:/,'') } });
+let renderQueue;
+
+try {
+  const u = new URL(REDIS_URL);
+  renderQueue = new Queue('render', {
+    connection: {
+      host: u.hostname,
+      port: Number(u.port || 6379),
+      password: (u.password || '').replace(/^:/, '') || undefined
+    }
+  });
+  console.log('Queue connected to Redis at', `${u.hostname}:${u.port || 6379}`);
+} catch (err) {
+  console.error('Queue init failed. Continuing without Redis:', err?.message || err);
+}
 
 // Metrics
 const registry = new Registry();
