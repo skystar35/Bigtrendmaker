@@ -24,5 +24,5 @@ This repo runs on Railway with:
 - `npm i`
 - `npm run start` (API)
 - `npm run worker` (Worker) — requires Redis
-
+update test
 Enjoy!
