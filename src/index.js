@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { Registry, collectDefaultMetrics, Histogram } from 'prom-client';
-import { createClient } from 'redis';
 import { Queue } from 'bullmq';
 import { assRoutes } from './routes/ass.js';
 import { uploadRoutes } from './routes/upload.js';
