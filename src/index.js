@@ -1,4 +1,3 @@
-// src/index.js
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { Registry, collectDefaultMetrics, Histogram } from 'prom-client';
@@ -14,22 +13,21 @@ import { automontageRoutes } from './routes/automontage.js';
 import { cdnRoutes } from './routes/cdn.js';
 
 const app = Fastify({ logger: false });
-app.register(cors, { origin: '*', methods: ['GET','POST','PUT','DELETE','OPTIONS'] });
+app.register(cors, { origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] });
 
 // --- Storage ---
 const STORAGE_DIR = process.env.STORAGE_DIR || path.resolve('./storage');
-const RENDER_DIR  = process.env.RENDER_OUTPUT_DIR || path.join(STORAGE_DIR, 'renders');
+const RENDER_DIR = process.env.RENDER_OUTPUT_DIR || path.join(STORAGE_DIR, 'renders');
 fs.mkdirSync(STORAGE_DIR, { recursive: true });
-fs.mkdirSync(RENDER_DIR,  { recursive: true });
+fs.mkdirSync(RENDER_DIR, { recursive: true });
 
 // --- Redis & Queue ---
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const redis = new IORedis(REDIS_URL);
-
 const renderQueue = new Queue('render', { connection: redis });
 console.log('Queue connected to Redis at', redis.options.host + ':' + redis.options.port);
 
-// --- Inline Worker (ayrı servise gerek yok) ---
+// --- Worker (inline) ---
 function run(cmd) {
   return new Promise((res, rej) => {
     exec(cmd, (err, stdout, stderr) => {
@@ -57,9 +55,9 @@ const renderWorker = new Worker(
   { connection: redis }
 );
 
-renderWorker.on('ready',     () => console.log('Render worker ready'));
+renderWorker.on('ready', () => console.log('Render worker ready'));
 renderWorker.on('completed', (job) => console.log('Render finished', job.id));
-renderWorker.on('failed',    (job, err) => console.error('Render failed', job?.id, err?.message));
+renderWorker.on('failed', (job, err) => console.error('Render failed', job?.id, err?.message));
 
 // --- Metrics ---
 const registry = new Registry();
@@ -67,13 +65,13 @@ collectDefaultMetrics({ register: registry });
 const httpHistogram = new Histogram({
   name: 'http_request_seconds',
   help: 'HTTP latency',
-  labelNames: ['route','method','code'],
-  registers: [registry]
+  labelNames: ['route', 'method', 'code'],
+  registers: [registry],
 });
 app.addHook('onResponse', async (req, reply) => {
   const route = req.routerPath || req.url || 'unknown';
   httpHistogram.labels(route, req.method, String(reply.statusCode))
-               .observe(Number(reply.getResponseTime())/1000);
+               .observe(Number(reply.getResponseTime()) / 1000);
 });
 
 // --- Health ---
@@ -95,9 +93,19 @@ app.get('/metrics', async (req, reply) => {
 const PORT = Number(process.env.PORT || 8080);
 app.listen({ port: PORT, host: '0.0.0.0' })
   .then(() => console.log('API listening on', PORT))
-  .catch(e => { console.error(e); process.exit(1); });
+  .catch((e) => { console.error(e); process.exit(1); });
 
 // --- Keep Alive ---
 setInterval(() => {
   console.log('⏱️ Keep-alive ping', new Date().toISOString());
 }, 60000);
+
+// --- Self Ping (prevents Railway sleep) ---
+setInterval(async () => {
+  try {
+    await fetch('https://bigtrendmaker-production.up.railway.app/');
+    console.log('🔁 Self ping OK');
+  } catch (e) {
+    console.error('Ping failed:', e.message);
+  }
+}, 20000);
