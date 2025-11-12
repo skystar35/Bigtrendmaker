@@ -15,24 +15,24 @@ export function automontageRoutes(app, renderQueue, RENDER_DIR) {
   });
 
   // Durum sorgu
-  app.get('/v1/automontage/status/:id', async (req, reply) => {
-    if (!renderQueue) {
-      return reply.code(503).send({ ok: false, error: 'queue_unavailable' });
-    }
+app.get('/v1/automontage/status/:id', async (req, reply) => {
+  if (!renderQueue) {
+    return reply.code(503).send({ ok: false, error: 'queue_unavailable' });
+  }
 
-    const id = req.params.id;
-    const job = await renderQueue.getJob(id);
-    if (!job) return reply.code(404).send({ ok: false, error: 'job_not_found' });
+  const id = req.params.id;
+  const job = await renderQueue.getJob(id);
+  if (!job) return reply.code(404).send({ ok: false, error: 'job_not_found' });
 
-    const state = await job.getState(); // waiting | active | completed | failed | delayed
-    const out = job.returnvalue?.output;
+  const state = await job.getState();
+  const out = job.returnvalue?.output;
 
-    const res = { ok: true, state };
-    if (state === 'completed' && out) {
-      const ext = path.extname(out).slice(1);
-      res.url = `/cdn/renders/${id}.${ext}`;
-    }
-    if (state === 'failed') res.error = job.failedReason || 'failed';
-    return res;
-  });
-}
+  const res = { ok: true, state };
+  if (state === 'completed' && out) {
+    const ext = path.extname(out).slice(1) || 'mp4';
+    res.url = `/cdn/renders/${id}.${ext}`;
+  }
+  if (state === 'failed') res.error = job.failedReason || 'failed';
+
+  return reply.send(res);
+});
