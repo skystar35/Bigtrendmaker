@@ -12,8 +12,6 @@ export function cdnRoutes(app) {
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 import fs from 'fs';
-
-export function cdnRoutes(app) {
   // Render edilmiş videoların bulunduğu klasör
   const renderDir = process.env.RENDER_OUTPUT_DIR || path.join('./storage', 'renders');
 
