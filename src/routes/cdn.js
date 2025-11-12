@@ -8,14 +8,16 @@ export function cdnRoutes(app) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  const STORAGE_DIR = process.env.STORAGE_DIR || './storage';
+  // Railway içinde storage dizinini /app/storage olarak sabitle
+  const STORAGE_DIR = process.env.STORAGE_DIR || path.resolve('/app/storage');
   const RENDER_DIR = process.env.RENDER_OUTPUT_DIR || path.join(STORAGE_DIR, 'renders');
 
   fs.mkdirSync(RENDER_DIR, { recursive: true });
 
+  // statik dosyaları buradan yayınla
   app.register(fastifyStatic, {
-    root: path.resolve(RENDER_DIR),
-    prefix: '/cdn/renders/', // örn: /cdn/renders/4.mp4
+    root: RENDER_DIR,
+    prefix: '/cdn/renders/',
     decorateReply: false
   });
 
